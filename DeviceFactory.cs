@@ -21,6 +21,11 @@ public static class DeviceFactory
     /// <exception cref="ArgumentException">Nem ra khi loai thiet bi khong duoc ho tro.</exception>
     public static IDevice Create(string type, string name)
     {
+        if (type == null)
+        {
+            throw new ArgumentException("Device type cannot be null.");
+        }
+
         // Chuan hoa chuoi loai thiet bi de khong phan biet hoa thuong va khoang trang
         return type.Trim().ToLowerInvariant() switch
         {

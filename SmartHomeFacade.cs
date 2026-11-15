@@ -24,6 +24,10 @@ public sealed class SmartHomeFacade
     /// <param name="door">Thiet bi cua ho tro khoa.</param>
     public SmartHomeFacade(IDevice light, IDevice fan, ILockable door)
     {
+        ArgumentNullException.ThrowIfNull(light);
+        ArgumentNullException.ThrowIfNull(fan);
+        ArgumentNullException.ThrowIfNull(door);
+
         this.light = light;
         this.fan = fan;
         this.door = door;

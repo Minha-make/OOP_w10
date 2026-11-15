@@ -4,6 +4,7 @@
 /****************/
 
 using System;
+using System.IO;
 
 namespace SmartHomeMini;
 
@@ -44,25 +45,40 @@ public static class Tests
     }
 
     /// <summary>
-    /// T2: Kiem tra Factory nem ArgumentException khi gap loai thiet bi chua ho tro.
+    /// T2: Kiem tra Factory nem ArgumentException khi gap loai thiet bi chua ho tro hoac null.
     /// </summary>
     private static void Test2_DeviceFactoryUnsupportedType()
     {
-        bool pass = false;
+        bool passCamera = false;
         try
         {
             DeviceFactory.Create("camera", "Camera an ninh");
         }
         catch (ArgumentException)
         {
-            pass = true;
+            passCamera = true;
         }
         catch (Exception)
         {
-            pass = false;
+            passCamera = false;
         }
 
-        PrintResult("T2", "Tao thiet bi 'camera' nem ArgumentException", pass);
+        bool passNull = false;
+        try
+        {
+            DeviceFactory.Create(null!, "Thiet bi null");
+        }
+        catch (ArgumentException)
+        {
+            passNull = true;
+        }
+        catch (Exception)
+        {
+            passNull = false;
+        }
+
+        bool pass = passCamera && passNull;
+        PrintResult("T2", "Tao thiet bi 'camera' hoac null nem ArgumentException", pass);
     }
 
     /// <summary>
@@ -100,7 +116,7 @@ public static class Tests
     }
 
     /// <summary>
-    /// T5: Kiem tra GoToSleep() lam quat tat, cua khoa, den bat va hien thi muc sang.
+    /// T5: Kiem tra GoToSleep() lam quat tat, cua khoa, den bat va hien thi dung muc sang.
     /// </summary>
     private static void Test5_FacadeGoToSleep()
     {
@@ -113,12 +129,33 @@ public static class Tests
         fan.TurnOn();
         door.Unlock();
 
-        SmartHomeFacade facade = new SmartHomeFacade(light, fan, door);
-        facade.GoToSleep();
+        // Luu lai gia tri muc sang cu va dat gia tri 65 de kiem tra
+        int oldLevel = HomeConfiguration.Instance.NightLightLevel;
+        HomeConfiguration.Instance.NightLightLevel = 65;
 
-        // Kiem tra sau khi GoToSleep(): quat tat, cua khoa, den bat
-        bool pass = (!fan.IsOn) && door.IsLocked && light.IsOn;
-        PrintResult("T5", "GoToSleep() lam quat tat, cua khoa, den bat", pass);
+        // Chuyen huong Console.Out de bat chuoi in muc sang
+        TextWriter originalOut = Console.Out;
+        using var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
+
+        try
+        {
+            SmartHomeFacade facade = new SmartHomeFacade(light, fan, door);
+            facade.GoToSleep();
+        }
+        finally
+        {
+            // Khoi phuc lai Console.Out va gia tri cau hinh cu
+            Console.SetOut(originalOut);
+            HomeConfiguration.Instance.NightLightLevel = oldLevel;
+        }
+
+        string output = stringWriter.ToString();
+        bool hasNightLightOutput = output.Contains("Night light level: 65%");
+
+        // Kiem tra sau khi GoToSleep(): quat tat, cua khoa, den bat va co in muc sang 65%
+        bool pass = (!fan.IsOn) && door.IsLocked && light.IsOn && hasNightLightOutput;
+        PrintResult("T5", "GoToSleep() lam quat tat, cua khoa, den bat va hien thi dung muc sang", pass);
     }
 
     /// <summary>
